@@ -48,6 +48,8 @@ succeeded because it is highly likely to create duplicate counter operations.
 
 #Running
 
+I couldn't get it to compile with R13B04.Seems to work on R14B01.
+
     make devrel
     make dev-start
     make dev-join
