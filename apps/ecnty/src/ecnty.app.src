@@ -1,0 +1,14 @@
+{application, ecnty,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  riak_core,
+                  lager
+                 ]},
+  {mod, { ecnty_app, []}},
+  {env, []}
+ ]}.

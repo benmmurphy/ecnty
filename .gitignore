@@ -1,0 +1,9 @@
+*.beam
+.eunit
+deps/*
+apps/ecnty/ebin
+*~
+dev/*
+doc/*
+rel/ecnty
+
