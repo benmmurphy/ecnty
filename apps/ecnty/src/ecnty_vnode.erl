@@ -4,6 +4,8 @@
 -include_lib("riak_core/include/riak_core_vnode.hrl").
 -compile([{parse_transform, lager_transform}]).
 
+-export([test_vnode/1]).
+
 -export([start_vnode/1,
          init/1,
          terminate/2,
@@ -19,7 +21,7 @@
          handle_exit/3,
          handle_coverage/4]).
 
--export([increment/4, get/3, merge/4]).
+-export([increment/4, increment_sync/3, get/3, get_sync/2, merge/4]).
 
 -define(MASTER, ecnty_vnode_master).
 -define(sync(PrefList, Command, Master),
@@ -28,9 +30,18 @@
 
 -record(state, {storage_module, storage_state, my_id = "" :: string(), partition}).
 
+test_vnode(I) ->
+    riak_core_vnode:start_link(?MODULE, I, infinity).
+    
 %% API
 start_vnode(I) ->
     riak_core_vnode_master:get_vnode_pid(I, ?MODULE).
+
+get_sync(Preflist, Key) ->
+    riak_core_vnode_master:sync_command(Preflist, {get, Key}, ?MASTER).
+    
+increment_sync(Preflist, Key, Value) ->
+    riak_core_vnode_master:sync_command(Preflist, {increment, Key, Value}, ?MASTER).
 
 get(Preflist, Key, Sender) ->
     riak_core_vnode_master:command(Preflist, {get, Key}, Sender, ?MASTER).
@@ -47,7 +58,7 @@ init([Partition]) ->
         
     {ok, Vid} = vnode_id:get_vnodeid(Partition),
     {ok, StorageState} = Module:start(Partition, Configuration),
-    {ok, #state { storage_module = Module, partition=Partition, my_id = Vid, storage_state = StorageState }}.
+    {ok, #state { storage_module = Module, partition=Partition, my_id = <<Partition:160, Vid/binary>>, storage_state = StorageState }}.
 
 
 do_get(StatName, _Sender, #state{storage_module = StorageModule, storage_state=StorageState}=State) ->
@@ -55,10 +66,10 @@ do_get(StatName, _Sender, #state{storage_module = StorageModule, storage_state=S
       case StorageModule:get(StorageState, StatName) of
         {ok, Counters} -> 
             lager:debug("do_get ok ~p", [StatName]),
-            {reply, {ok, Counters}, State};
+            {reply, {r, {ok, Counters}, State#state.partition}, State};
         {error, Reason} -> 
             lager:debug("do_get error ~p ~p", [StatName, Reason]),
-            {reply, {error, Reason}, State}
+            {reply, {r, {error, Reason}, State#state.partition}, State}
       end.
  
 do_increment(StatName, Value, _Sender, #state{storage_module = StorageModule, my_id = MyId, storage_state=StorageState}=State) ->

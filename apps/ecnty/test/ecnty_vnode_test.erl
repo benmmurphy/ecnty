@@ -15,7 +15,7 @@ increment_test() ->
   ?assertEqual(5, partitioned_counter:value(Counters2)),
   {reply, {ok, Counters3}, State4} = ecnty_vnode:handle_command({increment, "Key1", 6}, undefined, State3),
   ?assertEqual(10, partitioned_counter:value(Counters3)),
-  {reply, {ok, Counters4}, State5} = ecnty_vnode:handle_command({get, "Key1"}, undefined, State4),
+  {reply, {r, {ok, Counters4}, 123}, State5} = ecnty_vnode:handle_command({get, "Key1"}, undefined, State4),
   ?assertEqual(10, partitioned_counter:value(Counters4)),
   ?assertEqual(ok, ecnty_vnode:terminate(noreason, State5)).
 
@@ -30,7 +30,7 @@ merge_empty_test() ->
   {ok, From1} = ecnty_vnode:init([234]),
   Pc3 = create_counter(),
   {reply, ok, From2} = ecnty_vnode:handle_command({merge, "key", Pc3}, undefined, From1),
-  {reply, {ok, Pc4}, From3} = ecnty_vnode:handle_command({get, "key"}, undefined, From2),
+  {reply, {r, {ok, Pc4}, 234}, From3} = ecnty_vnode:handle_command({get, "key"}, undefined, From2),
   ?assertEqual(Pc3, Pc4),
   ecnty_vnode:terminate(no_reason, From3).
 
@@ -40,7 +40,7 @@ merge_non_empty_test() ->
   {reply, {ok, Counters}, From2} = ecnty_vnode:handle_command({increment, "key", 4}, undefined, From1),
   Pc3 = create_counter(),
   {reply, ok, From3} = ecnty_vnode:handle_command({merge, "key", Pc3}, undefined, From2),
-  {reply, {ok, Pc4}, From4} = ecnty_vnode:handle_command({get, "key"}, undefined, From3),
+  {reply, {r, {ok, Pc4}, 234}, From4} = ecnty_vnode:handle_command({get, "key"}, undefined, From3),
   ?assertEqual(15, partitioned_counter:value(Pc4)),
   ecnty_vnode:terminate(no_reason, From4).
 
@@ -63,6 +63,6 @@ handoff_test() ->
   {ok, From8} = ecnty_vnode:handoff_finished(undefined, From7),
   {ok, From9} = ecnty_vnode:delete(From8),
   ecnty_vnode:terminate(no_reason, From9),
-  {reply, {ok, Counters}, ToN2} = ecnty_vnode:handle_command({get, "Key1"}, undefined, ToN1),
-  {reply, {ok, Counters2}, ToN3} = ecnty_vnode:handle_command({get, "Key2"}, undefined, ToN2).
+  {reply, {r, {ok, Counters}, 456}, ToN2} = ecnty_vnode:handle_command({get, "Key1"}, undefined, ToN1),
+  {reply, {r, {ok, Counters2}, 456}, ToN3} = ecnty_vnode:handle_command({get, "Key2"}, undefined, ToN2).
 

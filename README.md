@@ -31,20 +31,19 @@ A read is done by reading from R nodes then merging the results.
 #Issues
 
 1. Whenever a partition changes ownership a new vnode id is created. This can lead to a lot of VNodeCount entries in the counter object because they are never pruned.
-2. There is currently no read-repair performed.
-3. Repair operations are only done on write and read [not implemented]. If you permanently lose a member of a cluster you should consider forcing a read repair to ensure replicas are maintained. For example if you have N=3, lose two members, then 1 months later lose another member then any keys that haven't been written to or read from in that month may be lost. I suspect this is also the way riak-kv works because i've seen scripts that force read repair on a bucket. But maybe that is for when you want to change the N value on a bucket (http://contrib.basho.com/bucket_inspector.html)  
-4. You can't delete a counter object
-5. I'm not 100% sure the vnode_id.erl generates ids that are unique enough for my purpose. I may be abusing it :)
-6. If you try and start a node that is already running bad things happen. This shouldn't happen.
-7. You shouldn't be using this counter implementation anywhere where duplicates or lost updates cannot be tolerated :) For example if you receive an error when updating
+2. Repair operations are only done on write and read. If you permanently lose a member of a cluster you should consider forcing a read repair to ensure replicas are maintained. For example if you have N=3, lose two members, then 1 months later lose another member then any keys that haven't been written to or read from in that month may be lost. I suspect this is also the way riak-kv works because i've seen scripts that force read repair on a bucket. But maybe that is for when you want to change the N value on a bucket (http://contrib.basho.com/bucket_inspector.html)  
+3. You can't delete a counter object
+4. I'm not 100% sure the vnode_id.erl generates ids that are unique enough for my purpose. I may be abusing it :)
+5. If you try and start a node that is already running bad things happen. This shouldn't happen.
+6. You shouldn't be using this counter implementation anywhere where duplicates or lost updates cannot be tolerated :) For example if you receive an error when updating
    a counter it is possible that the update actually succeeded. This happens because we may write the new counter value to disk and then the network disappears so you
    do not receive confirmation of the write. There is nothing in the protocol to allow safe retrying of a counter operation. (see also: https://issues.apache.org/jira/browse/CASSANDRA-2495)
-8. Durability is also problematic. We will try to write the update to one node. If this write succeeds we willtry to write to the other nodes to fullfill the requested W-value. If a subsequent write fails the client receives an error. However, it is possible (most likely!) that the update
+7. Durability is also problematic. We will try to write the update to one node. If this write succeeds we willtry to write to the other nodes to fullfill the requested W-value. If a subsequent write fails the client receives an error. However, it is possible (most likely!) that the update
 will become durable in a subsequent read repair/write repair. The client should probably not retry operations that fail after the first write has
 succeeded because it is highly likely to create duplicate counter operations.
-9. I have not done enough testing of this code :( The fsms lack unit tests and I found when my vnode lacked unit tests it blew up in spots. It wouldn't surprise if the
+8. I have not done enough testing of this code :( The fsms lack unit tests and I found when my vnode lacked unit tests it blew up in spots. It wouldn't surprise if the
    fsms blow up.
-10. Failing eunit test for leveldb storage drop. Need to fix this :(
+9. Failing eunit test for leveldb storage drop. Need to fix this :(
 
 #Running
 
