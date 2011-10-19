@@ -43,7 +43,6 @@ will become durable in a subsequent read repair/write repair. The client should 
 succeeded because it is highly likely to create duplicate counter operations.
 8. I have not done enough testing of this code :( The fsms lack unit tests and I found when my vnode lacked unit tests it blew up in spots. It wouldn't surprise if the
    fsms blow up.
-9. Failing eunit test for leveldb storage drop. Need to fix this :(
 
 #Running
 
