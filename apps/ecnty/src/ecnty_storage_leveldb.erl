@@ -73,8 +73,8 @@ drop(#state{file = File} = State) ->
           case open(File, State) of
               {error, Reason} ->
                   {error, Reason, State};
-              {ok, State} ->
-                  {ok, State}
+              {ok, State1} ->
+                  {ok, State1}
           end;
       {error, Reason} ->
           {error, Reason, State}
